@@ -210,9 +210,7 @@ function getRectangleString(width, height) {
     const bottomEdge = `└${horizontalEdge}┘` + '\n';
     const innerSpace = `│${' '.repeat(width - 2)}│` + '\n';
 
-    const square = topEdge + innerSpace.repeat(height - 2) + bottomEdge;
-
-    return square;
+    return  topEdge + innerSpace.repeat(height - 2) + bottomEdge;
 }
 
 
