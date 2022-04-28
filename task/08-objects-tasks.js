@@ -10,7 +10,7 @@
 
 
 /**
- * Returns the rectagle object with width and height parameters and getArea() method
+ * Returns the rectangle object with width and height parameters and getArea() method
  *
  * @param {number} width
  * @param {number} height
@@ -23,7 +23,12 @@
  *    console.log(r.getArea());   // => 200
  */
 function Rectangle(width, height) {
-    throw new Error('Not implemented');
+    this.width = width;
+    this.height = height;
+}
+
+Rectangle.prototype.getArea = function () {
+    return this.width * this.height;
 }
 
 
@@ -38,7 +43,7 @@ function Rectangle(width, height) {
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
 function getJSON(obj) {
-    throw new Error('Not implemented');
+    return JSON.stringify(obj);
 }
 
 
@@ -54,14 +59,17 @@ function getJSON(obj) {
  *
  */
 function fromJSON(proto, json) {
-    throw new Error('Not implemented');
+    const res = Object.create(proto);
+    const jsonObj = JSON.parse(json);
+
+    return Object.assign(res, jsonObj);
 }
 
 
 /**
  * Css selectors builder
  *
- * Each complex selector can consists of type, id, class, attribute, pseudo-class and pseudo-element selectors:
+ * Each complex selector can consist of type, id, class, attribute, pseudo-class and pseudo-element selectors:
  *
  *    element#id.class[attr]:pseudoClass::pseudoElement
  *              \----/\----/\----------/
@@ -71,7 +79,7 @@ function fromJSON(proto, json) {
  *
  * The task is to design a single class, independent classes or classes hierarchy and implement the functionality
  * to build the css selectors using the provided cssSelectorBuilder.
- * Each selector should have the stringify() method to output the string repsentation according to css specification.
+ * Each selector should have the stringify() method to output the string representation according to css specification.
  *
  * Provided cssSelectorBuilder should be used as facade only to create your own classes,
  * for example the first method of cssSelectorBuilder can be like this:
@@ -106,34 +114,167 @@ function fromJSON(proto, json) {
  *  For more examples see unit tests.
  */
 
+const SelectorsOrder = {
+    Empty: 0,
+    Element: 1,
+    Id: 2,
+    Class: 3,
+    Attr: 4,
+    PseudoClass: 5,
+    PseudoElement: 6,
+}
+
+function Selector() {
+    this._element = undefined;
+    this._id = undefined;
+    this._classes = [];
+    this._attrs = [];
+    this._pseudoClasses = [];
+    this._pseudoElement = undefined;
+    this._combination = '';
+    this.lastSelectorAdded = SelectorsOrder.Empty;
+
+
+    this.element = function(value) {
+        if (this._element) {
+            throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+        }
+        if (this.lastSelectorAdded > SelectorsOrder.Empty) {
+            throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+        }
+
+        this._element = value;
+        this.lastSelectorAdded = SelectorsOrder.Element;
+
+        return this;
+    };
+
+    this.id = function(value) {
+        if (this._id) {
+            throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+        }
+        if (this.lastSelectorAdded > SelectorsOrder.Element) {
+            throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+        }
+
+        this._id = value;
+        this.lastSelectorAdded = SelectorsOrder.Id;
+
+        return this;
+    };
+
+    this.class = function(value) {
+        if (this.lastSelectorAdded > SelectorsOrder.Class) {
+            throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+        }
+
+        this._classes.push(value);
+        this.lastSelectorAdded = SelectorsOrder.Class;
+
+        return this;
+    };
+
+    this.attr = function(value) {
+        if (this.lastSelectorAdded > SelectorsOrder.Attr) {
+            throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+        }
+
+        this._attrs.push(value);
+        this.lastSelectorAdded = SelectorsOrder.Attr;
+
+        return this;
+    };
+
+    this.pseudoClass = function(value) {
+        if (this.lastSelectorAdded > SelectorsOrder.PseudoClass) {
+            throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+        }
+
+        this._pseudoClasses.push(value);
+        this.lastSelectorAdded = SelectorsOrder.PseudoClass;
+
+        return this;
+    };
+
+    this.pseudoElement = function(value) {
+        if (this._pseudoElement) {
+            throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+        }
+        this._pseudoElement = value;
+        this.lastSelectorAdded = SelectorsOrder.PseudoElement;
+
+        return this;
+    };
+
+    this.stringify = function () {
+        if (this._combination) {
+            return this._combination;
+        }
+
+        return _stringifyElement(this._element) + _stringifyId(this._id) +
+                _stringifyClasses(this._classes) + _stringifyAttrs(this._attrs) +
+                _stringifyPseudoClasses(this._pseudoClasses) + _stringifyPseudoElement(this._pseudoElement);
+    };
+
+    this.combine = function(selector1, combinator, selector2) {
+        this._combination = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+
+        return this;
+    };
+
+    function _stringifyElement(element) {
+        return element || '';
+    }
+
+    function _stringifyId(id) {
+        return id ? `#${id}`: '';
+    }
+
+    function _stringifyClasses(classes) {
+        return classes.reduce((prev, curr) => prev + `.${curr}`, '');
+    }
+
+    function _stringifyAttrs(attrs) {
+        return attrs.reduce((prev, curr) => prev + `[${curr}]`, '');
+    }
+
+    function _stringifyPseudoClasses(pseudoClasses) {
+        return pseudoClasses.reduce((prev, curr) => prev + `:${curr}`, '');
+    }
+
+    function _stringifyPseudoElement(pseudoElement) {
+        return pseudoElement ? `::${pseudoElement}` : '';
+    }
+}
+
 const cssSelectorBuilder = {
 
     element: function(value) {
-        throw new Error('Not implemented');
+        return new Selector().element(value);
     },
 
     id: function(value) {
-        throw new Error('Not implemented');
+        return new Selector().id(value);
     },
 
     class: function(value) {
-        throw new Error('Not implemented');
+        return new Selector().class(value);
     },
 
     attr: function(value) {
-        throw new Error('Not implemented');
+        return new Selector().attr(value);
     },
 
     pseudoClass: function(value) {
-        throw new Error('Not implemented');
+        return new Selector().pseudoClass(value);
     },
 
     pseudoElement: function(value) {
-        throw new Error('Not implemented');
+        return new Selector().pseudoElement(value);
     },
 
     combine: function(selector1, combinator, selector2) {
-        throw new Error('Not implemented');
+        return new Selector().combine(selector1, combinator, selector2);
     },
 };
 
