@@ -2,7 +2,7 @@
 
 /********************************************************************************************
  *                                                                                          *
- * Plese read the following tutorial before implementing tasks:                             *
+ * Please read the following tutorial before implementing tasks:                             *
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators   *
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield        *
  *                                                                                          *
@@ -25,7 +25,7 @@
  * See the full text at
  * http://99-bottles-of-beer.net/lyrics.html
  *
- * NOTE: Please try to complete this task faster then original song finished:
+ * NOTE: Please try to complete this task faster than original song finished:
  * https://www.youtube.com/watch?v=Z7bmyjxJuVY   :)
  *
  *
@@ -33,7 +33,23 @@
  *
  */
 function* get99BottlesOfBeer() {
-    throw new Error('Not implemented');
+    let bottles = 99;
+
+    const getBottlesOfBeerString = (isFirstLetterUpperCase = false) => {
+        if (!bottles) {
+            return `${isFirstLetterUpperCase ? 'N' : 'n'}o more bottles of beer`;
+        }
+        return `${bottles} bottle${bottles !== 1 ? 's' : ''} of beer`
+    };
+
+    while (bottles) {
+        yield `${getBottlesOfBeerString(true)} on the wall, ${getBottlesOfBeerString()}.`
+        bottles--;
+        yield `Take one down and pass it around, ${getBottlesOfBeerString()} on the wall.`
+    }
+
+    yield `${getBottlesOfBeerString(true)} on the wall, ${getBottlesOfBeerString()}.`
+    yield 'Go to the store and buy some more, 99 bottles of beer on the wall.';
 }
 
 
@@ -47,7 +63,20 @@ function* get99BottlesOfBeer() {
  *
  */
 function* getFibonacciSequence() {
-    throw new Error('Not implemented');
+    let prev = 0;
+    let next = 1;
+
+    yield prev;
+    yield next;
+
+    while (true) {
+        const res = prev + next;
+        yield res;
+
+        prev = next;
+        next = res;
+    }
+
 }
 
 
@@ -82,7 +111,23 @@ function* getFibonacciSequence() {
  *
  */
 function* depthTraversalTree(root) {
-    throw new Error('Not implemented');
+    const stack = [root];
+
+    while (stack.length) {
+        const node = stack[stack.length - 1];
+
+        if (!node.isDiscovered) {
+            yield node;
+            node.isDiscovered = true;
+        }
+
+        if (!node.children || !node.children.length) {
+            stack.pop();
+            continue;
+        }
+
+        stack.push(node.children.shift());
+    }
 }
 
 
@@ -108,7 +153,23 @@ function* depthTraversalTree(root) {
  *
  */
 function* breadthTraversalTree(root) {
-    throw new Error('Not implemented');
+    const queue = [root];
+
+    while (queue.length) {
+        const node = queue[0];
+
+        if (!node.isDiscovered) {
+            yield node;
+            node.isDiscovered = true;
+        }
+
+        if (!node.children || !node.children.length) {
+            queue.shift();
+            continue;
+        }
+
+        queue.push(node.children.shift());
+    }
 }
 
 
@@ -126,7 +187,26 @@ function* breadthTraversalTree(root) {
  *   [ 1, 3, 5, ... ], [ -1 ] => [ -1, 1, 3, 5, ...]
  */
 function* mergeSortedSequences(source1, source2) {
-    throw new Error('Not implemented');
+    let source1LastItem;
+    let source2LastItem;
+    const source1Iterator = source1();
+    const source2Iterator = source2();
+    while (!source1LastItem?.done || !source2LastItem?.done) {
+        if (!source1LastItem || source1LastItem?.isYielded) {
+            source1LastItem = source1Iterator.next();
+        }
+        if (!source2LastItem || source2LastItem?.isYielded) {
+            source2LastItem = source2Iterator.next()
+        }
+
+        if (source1LastItem.value < source2LastItem.value || source2LastItem.done && !source1LastItem.isYielded && !source1LastItem.done) {
+            source1LastItem.isYielded = true;
+            yield source1LastItem.value;
+        } else if (!source2LastItem.isYielded && !source2LastItem.done) {
+            source2LastItem.isYielded = true;
+            yield source2LastItem.value;
+        }
+    }
 }
 
 

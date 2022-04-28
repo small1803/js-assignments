@@ -5,6 +5,7 @@ var tasks = require('../task/07-yield-tasks');
 it.optional = require('../extensions/it-optional');
 
 describe('07-yield-tasks', function() {
+    this.timeout(1000000);
 
     it.optional('get99BottlesOfBeer should return the sequence of song lyric lines', () => {
 
@@ -397,7 +398,7 @@ describe('07-yield-tasks', function() {
 
     it.optional('mergeSortedSequences should merge two sorted sequences into one sorted sequence', () => {
         const ITEMS_COUNT = 500;
-        
+
         var odds = function* () {
                for(var i=1; true; i+=2) yield i;
             };
@@ -429,7 +430,7 @@ describe('07-yield-tasks', function() {
             if (count == ITEMS_COUNT) break;
         }
         assert.equal(count, ITEMS_COUNT);
-        
+
 
         var minus1 = function* () { yield -1; }
         expected = -1;
