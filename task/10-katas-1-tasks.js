@@ -17,8 +17,36 @@
  *  ]
  */
 function createCompassPoints() {
-    throw new Error('Not implemented');
-    var sides = ['N','E','S','W'];  // use array of cardinal directions only!
+    const sides = ['N','E','S','W'];
+
+    let isDirect = true;
+    const getPrimarySecondarySides = (first, second) => {
+        const result = isDirect ? [first, second] : [second, first];
+        isDirect = !isDirect;
+
+        return result;
+    };
+
+    let i = 0;
+    while (i < 16) {
+        const current = sides[i];
+        const next = sides[i + 1] || sides[0];
+        const [primary, secondary] = getPrimarySecondarySides(current, next);
+        sides.splice(i + 1, 0, `${current}b${next}`, `${primary}${secondary}`, `${next}b${current}`);
+        i += 4;
+    }
+
+    i = 2;
+    while (i < 32) {
+        const current = sides[i];
+        const prev = sides[i - 2];
+        const next = sides[i + 2] || sides[0];
+        sides.splice(i + 1, 0, `${current}b${next}`, `${next}${current}`);
+        sides.splice(i, 0, `${prev}${current}`, `${current}b${prev}`);
+        i += 8;
+    }
+
+    return sides.map((side, index) => ({ abbreviation : side, azimuth: 11.25 * index}));
 }
 
 
@@ -56,7 +84,25 @@ function createCompassPoints() {
  *   'nothing to do' => 'nothing to do'
  */
 function* expandBraces(str) {
-    throw new Error('Not implemented');
+    const regex = new RegExp(/{[^{}]+}/g);
+    const processed = [str];
+
+    while (processed.length) {
+        let str = processed.shift();
+        let match = str.match(regex);
+        if (match) {
+            let alternations = match[0].slice(1, -1).split(',');
+
+            for (const alternation of alternations) {
+                let replaced = str.replace(match[0], alternation);
+                if (!processed.includes(replaced)) {
+                    processed.push(replaced)
+                }
+            }
+        } else {
+            yield str;
+        }
+    }
 }
 
 
@@ -88,12 +134,41 @@ function* expandBraces(str) {
  *
  */
 function getZigZagMatrix(n) {
-    throw new Error('Not implemented');
+    let i = 0, j = 0;
+    let counter = 0;
+    let diagonalLength = 1;
+    let remainingInDiagonal = 1
+    let isDirectionUp = true;
+    let isBeforeBiggestDiagonal = true;
+    const matrix = [...new Array(n)].map(() => [...new Array(n)].map(() => 0));
+
+    do {
+        matrix[i][j] = counter++;
+        remainingInDiagonal--;
+
+        if (!remainingInDiagonal) {
+            isDirectionUp ? (isBeforeBiggestDiagonal ? j++ : i++) : (isBeforeBiggestDiagonal ? i++ : j++);
+            isBeforeBiggestDiagonal ? diagonalLength++ : diagonalLength--;
+            if (isBeforeBiggestDiagonal && diagonalLength === n) {
+                isBeforeBiggestDiagonal = false;
+            }
+            remainingInDiagonal = diagonalLength;
+            isDirectionUp = !isDirectionUp;
+        } else if (isDirectionUp) {
+            i--;
+            j++;
+        } else if (!isDirectionUp) {
+            i++;
+            j--;
+        }
+    } while (counter < n * n);
+
+    return matrix;
 }
 
 
 /**
- * Returns true if specified subset of dominoes can be placed in a row accroding to the game rules.
+ * Returns true if specified subset of dominoes can be placed in a row according to the game rules.
  * Dominoes details see at: https://en.wikipedia.org/wiki/Dominoes
  *
  * Each domino tile presented as an array [x,y] of tile value.
@@ -102,7 +177,7 @@ function getZigZagMatrix(n) {
  * NOTE that as in usual dominoes playing any pair [i, j] can also be treated as [j, i].
  *
  * @params {array} dominoes
- * @return {bool}
+ * @return {boolean}
  *
  * @example
  *
@@ -113,7 +188,22 @@ function getZigZagMatrix(n) {
  *
  */
 function canDominoesMakeRow(dominoes) {
-    throw new Error('Not implemented');
+    let next = (list, n) => {
+        return list.map((a, b) => ({ i: b, v: a })).filter(a => a.v[0] === n || a.v[1] === n)
+    };
+    let test = (list, n) => {
+        return next(list, n).some(a => {
+            let clone = [...list];
+            clone.splice(a.i, 1);
+            return !clone.length || test(clone, a.v[0] === n ? a.v[1] : a.v[0])
+        });
+    };
+
+    return dominoes.some((a, b) => {
+        let clone = [...dominoes];
+        clone.splice(b, 1);
+        return test(clone, a[0]) || test(clone, a[1]);
+    });
 }
 
 
@@ -127,7 +217,7 @@ function canDominoesMakeRow(dominoes) {
  *     The range syntax is to be used only for, and for every range that expands to more than two values.
  *
  * @params {array} nums
- * @return {bool}
+ * @return {string}
  *
  * @example
  *
@@ -137,7 +227,27 @@ function canDominoesMakeRow(dominoes) {
  * [ 1, 2, 4, 5]          => '1,2,4,5'
  */
 function extractRanges(nums) {
-    throw new Error('Not implemented');
+    function Range() {
+        this.list = [];
+    }
+    Range.prototype.add = function(n) {
+        this.list.push(n);
+    }
+    Range.prototype.toString = function() {
+        return this.list.length > 2 ? this.list[0] + '-' + this.list[this.list.length - 1] : this.list.join();
+    }
+
+    let prev, ranges = [], range = new Range();
+    nums.forEach(a => {
+        if (prev && prev + 1 !== a) {
+            ranges.push(range);
+            range = new Range();
+        }
+        range.add(a);
+        prev = a;
+    });
+    ranges.push(range);
+    return ranges.join();
 }
 
 module.exports = {
